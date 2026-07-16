@@ -33,7 +33,7 @@ a { color: inherit; }
   display: none;
   position: fixed;
   top: 220px;
-  width: 205px;
+  width: 180px;
   z-index: 10;
   font-family: 'Roboto Mono', monospace;
 }
@@ -59,6 +59,14 @@ h1 { margin: 0 0 8px; font-size: clamp(58px, 9vw, 104px); line-height: .95; lett
   font: 500 15px/1.65 'Roboto Mono', monospace;
 }
 .authors > span { display: block; }
+.authors a {
+  text-decoration: underline;
+  text-decoration-color: color-mix(in srgb, var(--accent) 45%, transparent);
+  text-underline-offset: 3px;
+  transition: color .15s ease, text-decoration-color .15s ease;
+}
+.authors a:hover,
+.authors a:focus-visible { color: var(--accent); text-decoration-color: currentColor; }
 .authors .affiliation { color: #111; font-weight: 700; }
 .authors .author-note { color: var(--muted); font-size: 12px; }
 
@@ -363,7 +371,7 @@ footer { display: flex; justify-content: space-between; gap: 30px; margin-top: 9
 footer p { margin: 0; }
 
 @media (min-width: 1400px) {
-  .toc { display: block; left: max(30px, calc(50vw - 700px)); }
+  .toc { display: block; left: max(12px, calc(50vw - 800px)); }
 }
 
 @media (max-width: 760px) {
