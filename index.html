@@ -1,0 +1,343 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="LAG-Fusion: asynchronous multimodal diffusion policy composition via latency-aware guidance fusion.">
+  <title>LAG-Fusion</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <nav class="toc" aria-label="Page sections">
+    <h3>Content</h3>
+    <hr>
+    <ul>
+      <li><a href="#abstract">Abstract</a></li>
+      <li><a href="#method">Method</a></li>
+      <li class="toc-subsection"><a href="#rebase">Reference-frame Rebase</a></li>
+      <li class="toc-subsection"><a href="#fusion">Latency-Aware Guidance Fusion</a></li>
+      <li><a href="#experiments">Experiments</a></li>
+      <li><a href="#frequency">Frequency Study</a></li>
+    </ul>
+  </nav>
+
+  <main class="main-content">
+    <header class="hero">
+      <p class="eyebrow">Under Review</p>
+      <h1>LAG-Fusion</h1>
+      <p class="sub-hero-text">Asynchronous Multimodal Diffusion Policy Composition via Latency-Aware Guidance Fusion</p>
+
+      <div class="authors">
+        <span>Zihao He<sup>*</sup>, Hongjie Fang<sup>*</sup>, Shirun Tang, Cewu Lu<sup>†</sup>, Hao-Shu Fang<sup>†</sup></span>
+        <span class="affiliation">Shanghai Jiao Tong University · Noematrix · Shanghai Innovation Institute</span>
+        <span class="author-note"><sup>*</sup> Equal contribution &nbsp; <sup>†</sup> Corresponding authors</span>
+      </div>
+
+      <figure class="hero-figure">
+        <p class="teaser-instruction"><strong>Hover a region</strong> to explore each policy paradigm.</p>
+        <div class="teaser-explorer" data-teaser-explorer>
+          <img src="assets/overview.png" alt="Comparison of single, slow-fast, synchronous fusion, and asynchronous fusion policy paradigms">
+          <div class="teaser-hotspots" aria-label="Interactive policy paradigm regions">
+            <button class="teaser-hotspot" type="button" data-teaser-region="A" aria-label="Explore region A: Single policy"></button>
+            <button class="teaser-hotspot" type="button" data-teaser-region="B" aria-label="Explore region B: Slow-fast policy"></button>
+            <button class="teaser-hotspot" type="button" data-teaser-region="C" aria-label="Explore region C: Synchronous fusion policy"></button>
+            <button class="teaser-hotspot" type="button" data-teaser-region="D" aria-label="Explore region D: Our asynchronous fusion policy"></button>
+          </div>
+          <aside class="teaser-tooltip" aria-live="polite" hidden>
+            <span class="teaser-tooltip-kicker"></span>
+            <h3></h3>
+            <p></p>
+          </aside>
+        </div>
+        <figcaption><span class="smallcaps">LAG-Fusion</span> preserves both modularity and high-frequency reactivity by decoupling modality-specific inference and composing guidance asynchronously.</figcaption>
+      </figure>
+
+      <div class="quick-links" aria-label="Project links">
+        <a href="assets/LAG-Fusion.pdf" target="_blank" rel="noopener">[paper]</a>
+        <span aria-disabled="true">[code coming soon]</span>
+      </div>
+    </header>
+
+    <section id="abstract" class="paper-section">
+      <h2 class="tagline">Abstract.</h2>
+      <div class="section-copy abstract-copy">
+        <p>Diffusion policies have shown strong potential for robotic imitation learning, and recent extensions incorporate additional modalities to improve manipulation performance. However, these modalities often differ not only in information content but also in sensing rates and inference latencies. Existing multimodal diffusion policies typically rely on synchronous fusion or manually designed multi-frequency architectures, which either slow down high-frequency feedback or limit extensibility to new modality combinations. </p>
+        <p>We propose LAG-Fusion, a latency-aware guidance fusion framework for asynchronous multimodal diffusion policy composition. LAG-Fusion allows modality-specific policies to operate at their native inference rates and contribute denoising guidance whenever available. To make asynchronous composition consistent, we derive a reference-frame rebasing rule for diffusion variables under relative action representations, enabling delayed guidance to be aligned before fusion. We instantiate LAG-Fusion in contact-rich manipulation by composing a low-frequency vision policy with a high-frequency force policy. Experiments under heterogeneous modality latencies show that LAG-Fusion improves policy responsiveness and task performance over synchronous fusion and specially designed force-aware baselines.</p>
+      </div>
+    </section>
+
+    <section id="method" class="paper-section">
+      <h2 class="tagline">Method.</h2>
+      <div class="method-view-toggle" role="group" aria-label="Method figure display mode">
+        <button class="active" type="button" data-method-view="static" aria-pressed="true">Static</button>
+        <button type="button" data-method-view="animation" aria-pressed="false">Animation</button>
+      </div>
+      <figure class="full-figure method-figure">
+        <img src="assets/method.png" alt="Overview of LAG-Fusion with a 5 Hz vision policy, a 25 Hz force policy, and a diffusion composition head" data-method-media="static">
+        <video src="assets/method-anim.mp4" aria-label="Animated overview of the LAG-Fusion method" muted playsinline loop controls hidden data-method-media="animation"></video>
+        <figcaption class="method-caption">
+          <p class="method-caption-intro"><b>LAG-Fusion</b> composes modality-specific diffusion policies at their native inference frequencies.</p>
+          <div class="method-caption-grid">
+            <article class="method-caption-panel method-caption-left">
+              <span class="method-caption-side">Left · Native-rate policies</span>
+              <div class="method-policy-pair" aria-hidden="true">
+                <span class="method-policy-chip vision-chip">Vision · low frequency</span>
+                <span class="method-policy-plus">+</span>
+                <span class="method-policy-chip force-chip">Force/torque · high frequency</span>
+              </div>
+              <p>A low-frequency vision policy provides long-horizon scene guidance, while a high-frequency force/torque policy provides local contact guidance.</p>
+            </article>
+            <article class="method-caption-panel method-caption-right">
+              <span class="method-caption-side">Right · Diffusion composition head</span>
+              <div class="method-caption-flow" aria-hidden="true">
+                <span>Overlap</span><span>Rebase</span><span>Denoise</span><span>Fuse</span><span>Map back</span>
+              </div>
+              <p>In the diffusion composition head, the overlapping noisy action segment is rebased into the current force frame for force denoising. The corresponding vision guidance is rebased to the same frame, fused with force guidance, and mapped back to update the full-horizon noise prediction.</p>
+            </article>
+          </div>
+        </figcaption>
+      </figure>
+
+    </section>
+
+    <section id="rebase" class="paper-section">
+      <h2 class="section-subtitle">Reference-frame Rebase.</h2>
+      <p class="section-lead">Delayed guidance is still expressed in the action frame at its original query time. Before fusion, LAG-Fusion transforms every diffusion variable from the old frame <i>T</i><sub>1</sub> into the current frame <i>T</i><sub>2</sub>.</p>
+
+      <div class="equation-stack">
+        <div class="equation-row">
+          <div><span class="equation-index">01</span><h3>Relative action</h3><p>Full affine transform</p></div>
+          <div class="equation-formula">
+            <math display="block" aria-label="a prime equals A sub two from one a plus b sub two from one">
+              <mrow><msup><mi>a</mi><mo>′</mo></msup><mo>=</mo><msub><mi>A</mi><mrow><mn>2</mn><mo>←</mo><mn>1</mn></mrow></msub><mi>a</mi><mo>+</mo><msub><mi>b</mi><mrow><mn>2</mn><mo>←</mo><mn>1</mn></mrow></msub></mrow>
+            </math>
+          </div>
+        </div>
+        <div class="equation-row">
+          <div><span class="equation-index">02</span><h3>Noisy sample</h3><p>Offset scaled by the diffusion schedule</p></div>
+          <div class="equation-formula">
+            <math display="block" aria-label="a prime sub k equals A sub two from one a sub k plus square root alpha bar sub k b sub two from one">
+              <mrow><msub><msup><mi>a</mi><mo>′</mo></msup><mi>k</mi></msub><mo>=</mo><msub><mi>A</mi><mrow><mn>2</mn><mo>←</mo><mn>1</mn></mrow></msub><msub><mi>a</mi><mi>k</mi></msub><mo>+</mo><msqrt><msub><mover accent="true"><mi>α</mi><mo>¯</mo></mover><mi>k</mi></msub></msqrt><msub><mi>b</mi><mrow><mn>2</mn><mo>←</mo><mn>1</mn></mrow></msub></mrow>
+            </math>
+          </div>
+        </div>
+        <div class="equation-row">
+          <div><span class="equation-index">03</span><h3>Predicted noise</h3><p>Orthogonal linear transform only</p></div>
+          <div class="equation-formula">
+            <math display="block" aria-label="epsilon prime sub k equals A sub two from one epsilon sub k">
+              <mrow><msub><msup><mi>ε</mi><mo>′</mo></msup><mi>k</mi></msub><mo>=</mo><msub><mi>A</mi><mrow><mn>2</mn><mo>←</mo><mn>1</mn></mrow></msub><msub><mi>ε</mi><mi>k</mi></msub></mrow>
+            </math>
+          </div>
+        </div>
+      </div>
+      <p class="figure-caption"><b>Key property.</b> Because the linear part is orthogonal, rebasing preserves the standard Gaussian diffusion distribution.</p>
+
+      <details class="derivation-details">
+        <summary>
+          <span>Detailed derivation</span>
+          <span class="derivation-summary-meta">From action rebase to diffusion-variable rebase · Eqs. (3)–(7)</span>
+        </summary>
+
+        <div class="derivation-content">
+          <p class="derivation-intro">The delayed prediction is expressed in the robot frame at query time <i>t</i><sub>1</sub>, while fresh force guidance is expressed in the current frame at <i>t</i><sub>2</sub>. The derivation below shows how to express clean actions, noisy samples, and predicted noises in the same frame without changing the Gaussian diffusion distribution.</p>
+
+          <section class="derivation-step">
+            <span class="derivation-step-number">01</span>
+            <div>
+              <h3>Transform from the old frame to the current frame</h3>
+              <p>Let <i>T</i><sub>1</sub> and <i>T</i><sub>2</sub> be the robot poses at the two policy-query times. The relative transform contains a rotation and a translation:</p>
+              <div class="derivation-math">
+                <math display="block" aria-label="T sub two from one equals T two inverse T one equals R sub two from one comma p sub two from one">
+                  <mrow><msub><mi>T</mi><mrow><mn>2</mn><mo>←</mo><mn>1</mn></mrow></msub><mo>=</mo><msubsup><mi>T</mi><mn>2</mn><mrow><mo>−</mo><mn>1</mn></mrow></msubsup><msub><mi>T</mi><mn>1</mn></msub><mo>=</mo><mo>(</mo><msub><mi>R</mi><mrow><mn>2</mn><mo>←</mo><mn>1</mn></mrow></msub><mo>,</mo><msub><mi>p</mi><mrow><mn>2</mn><mo>←</mo><mn>1</mn></mrow></msub><mo>)</mo></mrow>
+                </math>
+              </div>
+              <p>This rigid-body transform is independent of the action-coordinate representation. The next step chooses coordinates that make its action-space rebase affine with an orthogonal linear part.</p>
+            </div>
+          </section>
+
+          <section class="derivation-step">
+            <span class="derivation-step-number">02</span>
+            <div>
+              <h3>Write the 10D action rebase as an affine map</h3>
+              <aside class="derivation-emphasis">
+                <h4>Why column-wise 6D matters</h4>
+                <p>Write the relative rotation as <i>R</i> = [<i>r</i><sub>1</sub>, <i>r</i><sub>2</sub>, <i>r</i><sub>3</sub>]. Left-multiplying by the frame rotation transforms every column independently. Stacking the first two columns therefore gives a linear rotation rebase:</p>
+                <div class="derivation-math">
+                  <math display="block" aria-label="R prime equals R sub two from one R implies r prime i equals R sub two from one r i, and R six d prime equals block diagonal R R times R six d">
+                    <mtable columnalign="left" rowspacing="0.55em">
+                      <mtr><mtd><msup><mi>R</mi><mo>′</mo></msup><mo>=</mo><msub><mi>R</mi><mrow><mn>2</mn><mo>←</mo><mn>1</mn></mrow></msub><mi>R</mi><mo>⇒</mo><msubsup><mi>r</mi><mi>i</mi><mo>′</mo></msubsup><mo>=</mo><msub><mi>R</mi><mrow><mn>2</mn><mo>←</mo><mn>1</mn></mrow></msub><msub><mi>r</mi><mi>i</mi></msub></mtd></mtr>
+                      <mtr><mtd><msubsup><mi>R</mi><mrow><mn>6</mn><mi>d</mi></mrow><mo>′</mo></msubsup><mo>=</mo><mtext>blockdiag</mtext><mo>(</mo><msub><mi>R</mi><mrow><mn>2</mn><mo>←</mo><mn>1</mn></mrow></msub><mo>,</mo><msub><mi>R</mi><mrow><mn>2</mn><mo>←</mo><mn>1</mn></mrow></msub><mo>)</mo><msub><mi>R</mi><mrow><mn>6</mn><mi>d</mi></mrow></msub></mtd></mtr>
+                    </mtable>
+                  </math>
+                </div>
+                <p><b>The specific 10D action representation and block-diagonal matrix below rely on this choice.</b> Common Euler-angle or axis-angle coordinates do not obey the same linear rebase rule. More generally, the derivation requires a rotation representation whose frame transform has an orthogonal linear form.</p>
+              </aside>
+              <p>Each relative action is represented by 3D translation, 6D rotation, and one gripper value:</p>
+              <div class="derivation-math">
+                <math display="block" aria-label="a equals x transpose comma R six d transpose comma g transpose in R ten">
+                  <mrow><mi>a</mi><mo>=</mo><msup><mrow><mo>[</mo><msup><mi>x</mi><mi>T</mi></msup><mo>,</mo><msubsup><mi>R</mi><mrow><mn>6</mn><mi>d</mi></mrow><mi>T</mi></msubsup><mo>,</mo><mi>g</mi><mo>]</mo></mrow><mi>T</mi></msup><mo>∈</mo><msup><mi>ℝ</mi><mn>10</mn></msup></mrow>
+                </math>
+              </div>
+              <div class="derivation-math derivation-math-pair">
+                <math display="block" aria-label="A sub two from one equals block diagonal R R R one">
+                  <mrow><msub><mi>A</mi><mrow><mn>2</mn><mo>←</mo><mn>1</mn></mrow></msub><mo>=</mo><mtext>blockdiag</mtext><mo>(</mo><msub><mi>R</mi><mrow><mn>2</mn><mo>←</mo><mn>1</mn></mrow></msub><mo>,</mo><msub><mi>R</mi><mrow><mn>2</mn><mo>←</mo><mn>1</mn></mrow></msub><mo>,</mo><msub><mi>R</mi><mrow><mn>2</mn><mo>←</mo><mn>1</mn></mrow></msub><mo>,</mo><mn>1</mn><mo>)</mo></mrow>
+                </math>
+                <math display="block" aria-label="b sub two from one equals p transpose zero transpose zero transpose zero transpose">
+                  <mrow><msub><mi>b</mi><mrow><mn>2</mn><mo>←</mo><mn>1</mn></mrow></msub><mo>=</mo><msup><mrow><mo>[</mo><msubsup><mi>p</mi><mrow><mn>2</mn><mo>←</mo><mn>1</mn></mrow><mi>T</mi></msubsup><mo>,</mo><msubsup><mn>0</mn><mn>3</mn><mi>T</mi></msubsup><mo>,</mo><msubsup><mn>0</mn><mn>3</mn><mi>T</mi></msubsup><mo>,</mo><mn>0</mn><mo>]</mo></mrow><mi>T</mi></msup></mrow>
+                </math>
+              </div>
+              <div class="derivation-math">
+                <math display="block" aria-label="a prime equals A sub two from one a plus b sub two from one">
+                  <mrow><msup><mi>a</mi><mo>′</mo></msup><mo>=</mo><msub><mi>A</mi><mrow><mn>2</mn><mo>←</mo><mn>1</mn></mrow></msub><mi>a</mi><mo>+</mo><msub><mi>b</mi><mrow><mn>2</mn><mo>←</mo><mn>1</mn></mrow></msub></mrow>
+                </math>
+              </div>
+              <p>Because <i>R</i><sub>2←1</sub> is a rotation matrix, the linear part <i>A</i><sub>2←1</sub> is orthogonal.</p>
+            </div>
+          </section>
+
+          <section class="derivation-step">
+            <span class="derivation-step-number">03</span>
+            <div>
+              <h3>Apply the affine rebase to the clean-action estimate</h3>
+              <p>For diffusion timestep <i>k</i>, the clean action estimated from noisy sample <i>a</i><sub>k</sub> and predicted noise <i>ε</i><sub>k</sub> is:</p>
+              <div class="derivation-math">
+                <math display="block" aria-label="a hat zero equals one over square root alpha bar k a k minus square root one minus alpha bar k over square root alpha bar k epsilon k">
+                  <mrow><msub><mover><mi>a</mi><mo>^</mo></mover><mn>0</mn></msub><mo>=</mo><mfrac><mn>1</mn><msqrt><msub><mover accent="true"><mi>α</mi><mo>¯</mo></mover><mi>k</mi></msub></msqrt></mfrac><msub><mi>a</mi><mi>k</mi></msub><mo>−</mo><mfrac><msqrt><mrow><mn>1</mn><mo>−</mo><msub><mover accent="true"><mi>α</mi><mo>¯</mo></mover><mi>k</mi></msub></mrow></msqrt><msqrt><msub><mover accent="true"><mi>α</mi><mo>¯</mo></mover><mi>k</mi></msub></msqrt></mfrac><msub><mi>ε</mi><mi>k</mi></msub></mrow>
+                </math>
+              </div>
+              <p>Rebase this clean estimate with the affine action transform and regroup it into the standard diffusion-estimator form:</p>
+              <div class="derivation-math derivation-long-equation">
+                <math display="block" aria-label="a hat prime zero equals A a hat zero plus b equals one over square root alpha bar k times A a k plus square root alpha bar k b minus square root one minus alpha bar k over square root alpha bar k times A epsilon k">
+                  <mrow><msubsup><mover><mi>a</mi><mo>^</mo></mover><mn>0</mn><mo>′</mo></msubsup><mo>=</mo><msub><mi>A</mi><mrow><mn>2</mn><mo>←</mo><mn>1</mn></mrow></msub><msub><mover><mi>a</mi><mo>^</mo></mover><mn>0</mn></msub><mo>+</mo><msub><mi>b</mi><mrow><mn>2</mn><mo>←</mo><mn>1</mn></mrow></msub><mo>=</mo><mfrac><mn>1</mn><msqrt><msub><mover accent="true"><mi>α</mi><mo>¯</mo></mover><mi>k</mi></msub></msqrt></mfrac><mo>(</mo><msub><mi>A</mi><mrow><mn>2</mn><mo>←</mo><mn>1</mn></mrow></msub><msub><mi>a</mi><mi>k</mi></msub><mo>+</mo><msqrt><msub><mover accent="true"><mi>α</mi><mo>¯</mo></mover><mi>k</mi></msub></msqrt><msub><mi>b</mi><mrow><mn>2</mn><mo>←</mo><mn>1</mn></mrow></msub><mo>)</mo><mo>−</mo><mfrac><msqrt><mrow><mn>1</mn><mo>−</mo><msub><mover accent="true"><mi>α</mi><mo>¯</mo></mover><mi>k</mi></msub></mrow></msqrt><msqrt><msub><mover accent="true"><mi>α</mi><mo>¯</mo></mover><mi>k</mi></msub></msqrt></mfrac><msub><mi>A</mi><mrow><mn>2</mn><mo>←</mo><mn>1</mn></mrow></msub><msub><mi>ε</mi><mi>k</mi></msub></mrow>
+                </math>
+              </div>
+            </div>
+          </section>
+
+          <section class="derivation-step">
+            <span class="derivation-step-number">04</span>
+            <div>
+              <h3>Read off the rebase rules</h3>
+              <p>Comparing the regrouped expression with the standard estimator in frame <i>T</i><sub>2</sub> gives:</p>
+              <div class="derivation-math derivation-final-rules">
+                <math display="block" aria-label="a prime k equals A a k plus square root alpha bar k b, epsilon prime k equals A epsilon k">
+                  <mtable columnalign="left">
+                    <mtr><mtd><msub><msup><mi>a</mi><mo>′</mo></msup><mi>k</mi></msub><mo>=</mo><msub><mi>A</mi><mrow><mn>2</mn><mo>←</mo><mn>1</mn></mrow></msub><msub><mi>a</mi><mi>k</mi></msub><mo>+</mo><msqrt><msub><mover accent="true"><mi>α</mi><mo>¯</mo></mover><mi>k</mi></msub></msqrt><msub><mi>b</mi><mrow><mn>2</mn><mo>←</mo><mn>1</mn></mrow></msub></mtd></mtr>
+                    <mtr><mtd><msub><msup><mi>ε</mi><mo>′</mo></msup><mi>k</mi></msub><mo>=</mo><msub><mi>A</mi><mrow><mn>2</mn><mo>←</mo><mn>1</mn></mrow></msub><msub><mi>ε</mi><mi>k</mi></msub></mtd></mtr>
+                  </mtable>
+                </math>
+              </div>
+              <p class="derivation-conclusion">The translation offset enters the noisy sample with the schedule-dependent factor √ᾱ<sub>k</sub>, but it is never added to the noise. Since <i>A</i><sub>2←1</sub><i>A</i><sub>2←1</sub><sup>T</sup> = <i>I</i>, transforming <i>ε</i> ∼ 𝒩(0, <i>I</i>) by <i>A</i><sub>2←1</sub> preserves its covariance and therefore the standard Gaussian diffusion distribution.</p>
+            </div>
+          </section>
+        </div>
+      </details>
+    </section>
+
+    <section id="fusion" class="paper-section">
+      <h2 class="section-subtitle">Latency-Aware Guidance Fusion.</h2>
+      <div class="method-view-toggle" role="group" aria-label="Latency-aware guidance fusion figure display mode">
+        <button class="active" type="button" data-fusion-view="static" aria-pressed="true">Static</button>
+        <button type="button" data-fusion-view="animation" aria-pressed="false">Animation</button>
+      </div>
+      <div class="fusion-layout">
+        <figure>
+          <img src="assets/fusion.png" alt="Latency-aware guidance fusion between reference frames T1 and T2" data-fusion-media="static">
+          <video src="assets/lag-fusion-anim.mp4" aria-label="Animated latency-aware guidance fusion between reference frames T1 and T2" muted playsinline loop controls hidden data-fusion-media="animation"></video>
+        </figure>
+        <ol class="fusion-steps">
+          <li><b>Select</b><span>the overlapping segment of the vision action horizon.</span></li>
+          <li><b>Rebase</b><span>the noisy sample and delayed vision guidance into the current force frame.</span></li>
+          <li><b>Fuse</b><span>aligned vision and force guidance using latency-aware weights.</span></li>
+          <li><b>Map back</b><span>the fused guidance to update the full diffusion trajectory.</span></li>
+        </ol>
+      </div>
+
+      <div class="weight-schedule">
+        <div class="weight-copy"><b>Early horizon</b><span>Vision 0.8 · Force 0.2</span></div>
+        <div class="weight-bar" aria-label="Vision weight decreases while force weight increases across the selected horizon"><span></span></div>
+        <div class="weight-copy align-right"><b>Late horizon</b><span>Vision 0.2 · Force 0.8</span></div>
+      </div>
+      <p class="figure-caption">Older long-horizon vision guidance gradually yields to fresher high-frequency force feedback, treating latency as a proxy for confidence.</p>
+    </section>
+
+    <section id="experiments" class="paper-section">
+      <h2 class="tagline">Experiments.</h2>
+      <figure class="full-figure">
+        <img src="assets/tasks.png" alt="Flip and Polish Curve contact-rich manipulation tasks">
+        <figcaption><b>Two contact-rich tasks.</b> Flip requires establishing contact and turning a box upright; Polish Curve requires stable contact while following a curved trajectory.</figcaption>
+      </figure>
+
+      <div class="metric-callouts">
+        <article><strong>25 Hz</strong><span>policy inference</span></article>
+        <article><strong>60.0%</strong><span>Flip score</span></article>
+        <article><strong>55.0%</strong><span>Polish Curve score</span></article>
+      </div>
+
+      <figure class="full-figure result-figure">
+        <img src="assets/results.png" alt="Evaluation table comparing LAG-Fusion with vision-only and multimodal policy baselines">
+        <figcaption>LAG-Fusion achieves the strongest overall performance while remaining modular and preserving high-frequency inference.</figcaption>
+      </figure>
+
+      <h3 class="gallery-title">Evaluation Videos — Flip</h3>
+      <div class="video-gallery-section" data-gallery>
+        <button class="gallery-nav left" type="button" data-direction="-1" aria-label="Previous Flip videos">‹</button>
+        <div class="video-gallery">
+          <video src="assets/videos/media2.mp4" poster="assets/posters/image11.png" autoplay muted playsinline loop controls></video>
+          <video src="assets/videos/media3.mp4" poster="assets/posters/image12.png" autoplay muted playsinline loop controls></video>
+          <video src="assets/videos/media4.mp4" poster="assets/posters/image13.png" autoplay muted playsinline loop controls></video>
+          <video src="assets/videos/media5.mp4" poster="assets/posters/image14.png" autoplay muted playsinline loop controls></video>
+        </div>
+        <button class="gallery-nav right" type="button" data-direction="1" aria-label="Next Flip videos">›</button>
+      </div>
+
+      <h3 class="gallery-title">Evaluation Videos — Polish Curve</h3>
+      <div class="video-gallery-section" data-gallery>
+        <button class="gallery-nav left" type="button" data-direction="-1" aria-label="Previous Polish Curve videos">‹</button>
+        <div class="video-gallery">
+          <video src="assets/videos/media6.mp4" poster="assets/posters/image15.png" autoplay muted playsinline loop controls></video>
+          <video src="assets/videos/media7.mp4" poster="assets/posters/image16.png" autoplay muted playsinline loop controls></video>
+          <video src="assets/videos/media8.mp4" poster="assets/posters/image17.png" autoplay muted playsinline loop controls></video>
+          <video src="assets/videos/media9.mp4" poster="assets/posters/image18.png" autoplay muted playsinline loop controls></video>
+        </div>
+        <button class="gallery-nav right" type="button" data-direction="1" aria-label="Next Polish Curve videos">›</button>
+      </div>
+    </section>
+
+    <section id="frequency" class="paper-section">
+      <h2 class="tagline">Frequency Study.</h2>
+      <h3 class="gallery-title">Higher Infer Frequency → Higher Success Rate</h3>
+      <figure class="full-figure">
+        <img src="assets/frequency.png" alt="Success rate increases with inference frequency for the standalone force policy and LAG-Fusion composition">
+        <figcaption><b>Higher inference frequency → higher success rate.</b> The trend holds for both the standalone force policy and the full asynchronous composition.</figcaption>
+      </figure>
+
+      <div class="frequency-summary">
+        <div><span>Infer Freq.: 2 Hz</span><b>73.7%</b><small>Average across input frequencies</small></div>
+        <div><span>Infer Freq.: 5 Hz</span><b>87.7%</b><small>Average across input frequencies</small></div>
+        <div class="highlight"><span>Infer Freq.: 25 Hz</span><b>95.3%</b><small>Average across input frequencies</small></div>
+      </div>
+
+      <h3 class="gallery-title">Standalone Force Policy — 500 Hz Input / 25 Hz Inference</h3>
+      <div class="video-gallery-section frequency-gallery" data-gallery>
+        <button class="gallery-nav left" type="button" data-direction="-1" aria-label="Previous frequency study videos">‹</button>
+        <div class="video-gallery">
+          <figure><video src="assets/videos/media10.mp4" poster="assets/posters/image21.png" autoplay muted playsinline loop controls></video><figcaption>Purple Box · Seen</figcaption></figure>
+          <figure><video src="assets/videos/media11.mp4" poster="assets/posters/image22.png" autoplay muted playsinline loop controls></video><figcaption>Vertical Orange Box · Unseen</figcaption></figure>
+          <figure><video src="assets/videos/media12.mp4" poster="assets/posters/image23.png" autoplay muted playsinline loop controls></video><figcaption>Square Box · Unseen</figcaption></figure>
+          <figure><video src="assets/videos/media13.mp4" poster="assets/posters/image24.png" autoplay muted playsinline loop controls></video><figcaption>Wooden Box · Unseen</figcaption></figure>
+          <figure><video src="assets/videos/media14.mp4" poster="assets/posters/image25.png" autoplay muted playsinline loop controls></video><figcaption>Half-filled Bottle · Unseen</figcaption></figure>
+        </div>
+        <button class="gallery-nav right" type="button" data-direction="1" aria-label="Next frequency study videos">›</button>
+      </div>
+    </section>
+
+    <footer>
+      <p><span class="smallcaps">LAG-Fusion</span> · Under Review</p>
+      <p>Website layout adapted from the <a href="https://github.com/videomimic-1/videomimic-1.github.io" target="_blank" rel="noopener">VideoMimic project page</a>.</p>
+    </footer>
+  </main>
+
+  <script src="script.js"></script>
+</body>
+</html>
