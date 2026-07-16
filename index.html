@@ -74,7 +74,7 @@
       </div>
       <figure class="full-figure method-figure">
         <img src="assets/method.png" alt="Overview of LAG-Fusion with a 5 Hz vision policy, a 25 Hz force policy, and a diffusion composition head" data-method-media="static">
-        <video src="assets/method-anim.mp4" aria-label="Animated overview of the LAG-Fusion method" muted playsinline loop controls hidden data-method-media="animation"></video>
+        <video src="assets/method-anim.mp4" aria-label="Animated overview of the LAG-Fusion method" muted playsinline controls hidden data-method-media="animation"></video>
         <figcaption class="method-caption">
           <p class="method-caption-intro"><b>LAG-Fusion</b> composes modality-specific diffusion policies at their native inference frequencies.</p>
           <div class="method-caption-grid">
@@ -243,7 +243,7 @@
       <div class="fusion-layout">
         <figure>
           <img src="assets/fusion.png" alt="Latency-aware guidance fusion between reference frames T1 and T2" data-fusion-media="static">
-          <video src="assets/lag-fusion-anim.mp4" aria-label="Animated latency-aware guidance fusion between reference frames T1 and T2" muted playsinline loop controls hidden data-fusion-media="animation"></video>
+          <video src="assets/lag-fusion-anim.mp4" aria-label="Animated latency-aware guidance fusion between reference frames T1 and T2" muted playsinline controls hidden data-fusion-media="animation"></video>
         </figure>
         <ol class="fusion-steps">
           <li><b>Select</b><span>the overlapping segment of the vision action horizon.</span></li>
@@ -253,12 +253,6 @@
         </ol>
       </div>
 
-      <div class="weight-schedule">
-        <div class="weight-copy"><b>Early horizon</b><span>Vision 0.8 · Force 0.2</span></div>
-        <div class="weight-bar" aria-label="Vision weight decreases while force weight increases across the selected horizon"><span></span></div>
-        <div class="weight-copy align-right"><b>Late horizon</b><span>Vision 0.2 · Force 0.8</span></div>
-      </div>
-      <p class="figure-caption">Older long-horizon vision guidance gradually yields to fresher high-frequency force feedback, treating latency as a proxy for confidence.</p>
     </section>
 
     <section id="experiments" class="paper-section">
@@ -325,7 +319,7 @@
           <figure><video src="assets/videos/media10.mp4" poster="assets/posters/image21.png" autoplay muted playsinline loop controls></video><figcaption>Purple Box · Seen</figcaption></figure>
           <figure><video src="assets/videos/media11.mp4" poster="assets/posters/image22.png" autoplay muted playsinline loop controls></video><figcaption>Vertical Orange Box · Unseen</figcaption></figure>
           <figure><video src="assets/videos/media12.mp4" poster="assets/posters/image23.png" autoplay muted playsinline loop controls></video><figcaption>Square Box · Unseen</figcaption></figure>
-          <figure><video src="assets/videos/media13.mp4" poster="assets/posters/image24.png" autoplay muted playsinline loop controls></video><figcaption>Wooden Box · Unseen</figcaption></figure>
+          <figure><video src="assets/videos/media13.mp4" poster="assets/posters/image24.png" autoplay muted playsinline loop controls></video><figcaption>Hardwood Block · Unseen</figcaption></figure>
           <figure><video src="assets/videos/media14.mp4" poster="assets/posters/image25.png" autoplay muted playsinline loop controls></video><figcaption>Half-filled Bottle · Unseen</figcaption></figure>
         </div>
         <button class="gallery-nav right" type="button" data-direction="1" aria-label="Next frequency study videos">›</button>

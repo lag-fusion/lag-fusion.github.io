@@ -27,8 +27,12 @@ const setupMediaToggle = (buttonSelector, mediaSelector, viewDataKey, mediaDataK
         media.hidden = !isActive;
 
         if (media instanceof HTMLVideoElement) {
-          if (isActive) media.play().catch(() => {});
-          else media.pause();
+          if (isActive) {
+            media.currentTime = 0;
+            media.play().catch(() => {});
+          } else {
+            media.pause();
+          }
         }
       });
     });
