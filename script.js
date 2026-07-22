@@ -126,3 +126,24 @@ const observer = new IntersectionObserver((entries) => {
 }, { rootMargin: '-20% 0px -65% 0px', threshold: 0 });
 
 document.querySelectorAll('section[id]').forEach((section) => observer.observe(section));
+
+document.querySelectorAll('[data-bibtex-copy]').forEach((button) => {
+  button.addEventListener('click', async () => {
+    const code = button.parentElement?.querySelector('code');
+    if (!code) return;
+
+    try {
+      await navigator.clipboard.writeText(code.textContent);
+      const previous = button.textContent;
+      button.textContent = 'Copied';
+      window.setTimeout(() => {
+        button.textContent = previous;
+      }, 1600);
+    } catch {
+      button.textContent = 'Failed';
+      window.setTimeout(() => {
+        button.textContent = 'Copy';
+      }, 1600);
+    }
+  });
+});
