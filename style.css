@@ -74,6 +74,7 @@ h1 { margin: 0 0 8px; font-size: clamp(58px, 9vw, 104px); line-height: .95; lett
 
 figure { margin: 0; }
 img, video { display: block; max-width: 100%; }
+img, .video-gallery video, .method-figure video { height: auto; }
 [hidden] { display: none !important; }
 .hero-figure img, .full-figure img, .fusion-layout img, .fusion-layout video {
   width: 100%;
@@ -443,17 +444,21 @@ footer p { margin: 0; }
 .demo-row:last-child { margin-bottom: 0; }
 .demo-caption { display: flex; align-items: flex-start; gap: 30px; margin-top: 10px; }
 .demo-controls { display: flex; flex: 0 0 auto; gap: 10px; }
-.demo-controls .gallery-nav { position: static; transform: none; width: 38px; height: 38px; background: #555; }
+.demo-controls .gallery-nav { position: static; transform: none; width: 44px; height: 44px; background: #555; touch-action: manipulation; }
 .demo-controls .gallery-nav:hover { background: #111; }
+.demo-controls .gallery-nav:disabled { opacity: .35; cursor: default; }
 .demo-caption p { margin: 2px 0 0; color: var(--muted); font: 400 14px/1.65 'Roboto Mono', monospace; }
 .demo-caption strong { color: #333; font-weight: 700; }
 .demo-row .video-gallery:focus-visible, .demo-controls button:focus-visible { outline: 2px solid var(--accent); outline-offset: 4px; }
 @media (max-width: 760px) {
   .demo-caption { gap: 14px; }
   .demo-controls { gap: 6px; }
-  .demo-controls .gallery-nav { width: 30px; height: 30px; font-size: 23px; }
-  .demo-caption p { margin-top: 0; font-size: 12px; }
+  .demo-controls .gallery-nav { width: 44px; height: 44px; font-size: 26px; }
+  .demo-caption p { margin-top: 0; min-width: 0; overflow-wrap: anywhere; font-size: 12px; }
   .demo-row { margin-bottom: 34px; }
+  .teaser-hotspots { bottom: auto; aspect-ratio: 2200 / 835; }
+  .teaser-tooltip, .teaser-tooltip.teaser-tooltip-right { position: relative; inset: auto; width: 100%; border-radius: 0; }
+  .method-view-toggle button { min-height: 44px; }
 }
 .table-scroll { width: 100%; overflow-x: auto; margin: 30px 0 12px; border: 1.5px solid #111; border-radius: 14px; background: #fff; }
 .table-scroll:focus-visible { outline: 2px solid var(--accent); outline-offset: 4px; }

@@ -1,21 +1,66 @@
-// Play experiment clips only while they are visible.
-const demoVideos = [...document.querySelectorAll('#experiments video')];
+// Autoplay visible clips; preserve manual pauses until a clip leaves the view.
+const demoVideos = [...document.querySelectorAll('video')];
 const visibleDemoVideos = new Set();
-const syncDemoPlayback = () => {
+const resumeAfterBackground = new Set();
+const isVideoVisible = (video) => {
+  const rect = video.getBoundingClientRect();
+  if (!rect.width || !rect.height) return false;
+  const track = video.closest('.video-gallery')?.getBoundingClientRect();
+  const left = Math.max(0, rect.left, track?.left ?? 0);
+  const right = Math.min(innerWidth, rect.right, track?.right ?? innerWidth);
+  const top = Math.max(0, rect.top, track?.top ?? 0);
+  const bottom = Math.min(innerHeight, rect.bottom, track?.bottom ?? innerHeight);
+  return Math.max(0, right - left) * Math.max(0, bottom - top) / (rect.width * rect.height) >= 0.25;
+};
+const playDemo = (video) => {
+  video.muted = true;
+  video.play().then(() => {
+    if (document.hidden || !isVideoVisible(video)) video.pause();
+  }).catch(() => {}); // Native controls remain available if autoplay is blocked.
+};
+let playbackFrame = 0;
+const updateDemoPlayback = () => {
+  playbackFrame = 0;
   demoVideos.forEach((video) => {
-    if (visibleDemoVideos.has(video) && !document.hidden) video.play().catch(() => {});
-    else video.pause();
+    const wasVisible = visibleDemoVideos.has(video);
+    if (isVideoVisible(video)) {
+      visibleDemoVideos.add(video);
+      if (!wasVisible && !document.hidden) playDemo(video);
+    } else {
+      visibleDemoVideos.delete(video);
+      resumeAfterBackground.delete(video);
+      video.pause();
+    }
   });
 };
-const demoVideoObserver = new IntersectionObserver((entries) => {
-  entries.forEach(({ target, intersectionRatio }) => {
-    if (intersectionRatio >= 0.15) visibleDemoVideos.add(target);
-    else visibleDemoVideos.delete(target);
+const schedulePlaybackUpdate = () => {
+  if (!playbackFrame) playbackFrame = requestAnimationFrame(updateDemoPlayback);
+};
+demoVideos.forEach((video) => {
+  video.muted = true;
+  video.addEventListener('play', () => {
+    if (document.hidden || !isVideoVisible(video)) video.pause();
   });
-  syncDemoPlayback();
-}, { threshold: 0.15 });
-demoVideos.forEach((video) => demoVideoObserver.observe(video));
-document.addEventListener('visibilitychange', syncDemoPlayback);
+});
+// Capture scroll events from both the page and each horizontal carousel.
+document.addEventListener('scroll', schedulePlaybackUpdate, { capture: true, passive: true });
+window.addEventListener('resize', schedulePlaybackUpdate);
+window.addEventListener('load', schedulePlaybackUpdate);
+schedulePlaybackUpdate();
+document.addEventListener('visibilitychange', () => {
+  if (document.hidden) {
+    demoVideos.forEach((video) => {
+      if (!video.paused) resumeAfterBackground.add(video);
+      video.pause();
+    });
+  } else {
+    updateDemoPlayback();
+    resumeAfterBackground.forEach((video) => {
+      if (isVideoVisible(video)) playDemo(video);
+    });
+    resumeAfterBackground.clear();
+  }
+});
 const resolveDemoAlias = () => {
   const aliases = { '#vision-force': 'flip-videos', '#vision-vision': 'pnp-videos' };
   const target = document.getElementById(aliases[location.hash]);
@@ -26,12 +71,26 @@ resolveDemoAlias();
 
 document.querySelectorAll('[data-gallery]').forEach((gallery) => {
   const track = gallery.querySelector('.video-gallery');
-  gallery.querySelectorAll('[data-direction]').forEach((button) => {
+  const buttons = [...gallery.querySelectorAll('[data-direction]')];
+  const updateButtons = () => {
+    const maxScroll = track.scrollWidth - track.clientWidth;
+    buttons.forEach((button) => {
+      button.disabled = Number(button.dataset.direction) < 0
+        ? track.scrollLeft <= 1
+        : track.scrollLeft >= maxScroll - 1;
+    });
+  };
+  buttons.forEach((button) => {
     button.addEventListener('click', () => {
       const direction = Number(button.dataset.direction);
-      track.scrollBy({ left: direction * Math.min(track.clientWidth * 0.82, 430), behavior: 'smooth' });
+      const step = track.firstElementChild.getBoundingClientRect().width
+        + (parseFloat(getComputedStyle(track).columnGap) || 0);
+      track.scrollBy({ left: direction * step, behavior: 'smooth' });
     });
   });
+  track.addEventListener('scroll', updateButtons, { passive: true });
+  window.addEventListener('resize', updateButtons);
+  updateButtons();
 });
 
 const setupMediaToggle = (buttonSelector, mediaSelector, viewDataKey, mediaDataKey) => {
