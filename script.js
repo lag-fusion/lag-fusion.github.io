@@ -1,3 +1,29 @@
+// Play experiment clips only while they are visible.
+const demoVideos = [...document.querySelectorAll('#experiments video')];
+const visibleDemoVideos = new Set();
+const syncDemoPlayback = () => {
+  demoVideos.forEach((video) => {
+    if (visibleDemoVideos.has(video) && !document.hidden) video.play().catch(() => {});
+    else video.pause();
+  });
+};
+const demoVideoObserver = new IntersectionObserver((entries) => {
+  entries.forEach(({ target, intersectionRatio }) => {
+    if (intersectionRatio >= 0.15) visibleDemoVideos.add(target);
+    else visibleDemoVideos.delete(target);
+  });
+  syncDemoPlayback();
+}, { threshold: 0.15 });
+demoVideos.forEach((video) => demoVideoObserver.observe(video));
+document.addEventListener('visibilitychange', syncDemoPlayback);
+const resolveDemoAlias = () => {
+  const aliases = { '#vision-force': 'flip-videos', '#vision-vision': 'pnp-videos' };
+  const target = document.getElementById(aliases[location.hash]);
+  if (target) target.scrollIntoView({ block: 'start' });
+};
+window.addEventListener('hashchange', resolveDemoAlias);
+resolveDemoAlias();
+
 document.querySelectorAll('[data-gallery]').forEach((gallery) => {
   const track = gallery.querySelector('.video-gallery');
   gallery.querySelectorAll('[data-direction]').forEach((button) => {
@@ -40,24 +66,23 @@ const setupMediaToggle = (buttonSelector, mediaSelector, viewDataKey, mediaDataK
 };
 
 setupMediaToggle('[data-method-view]', '[data-method-media]', 'methodView', 'methodMedia');
-setupMediaToggle('[data-fusion-view]', '[data-fusion-media]', 'fusionView', 'fusionMedia');
 
 const teaserRegions = {
   A: {
-    title: 'Single Policy',
-    text: 'Directly merging multimodal inputs into a single policy makes the policy neither modular nor reactive.'
+    title: 'Unified Policies',
+    text: 'Multiple inputs share one pipeline, without independent components or native-rate inference.'
   },
   B: {
-    title: 'Slow-fast Policy',
-    text: 'A fast branch outputs actions at a higher frequency, improving reactiveness, but the policy remains non-modular.'
+    title: 'Slow-fast & Hierarchical Policies',
+    text: 'Components run at different rates within a coupled architecture.'
   },
   C: {
-    title: 'Synchronous Fusion Policy',
-    text: 'Modality-specific encoders make the policy modular, but every branch must wait for the slowest modality before fusion, making the overall policy non-reactive.'
+    title: 'Synchronous Policy Composition',
+    text: 'Independent policies share one inference rate, limited by the slower components.'
   },
   D: {
-    title: 'Our Asynchronous Fusion Policy',
-    text: 'Modality-specific inference is decoupled and its outputs are composed with latency-aware guidance, preserving both modularity and high-frequency reactivity.'
+    title: 'MATE: Modular & Rate-preserving',
+    text: 'Independent policies retain their native rates, with guidance aligned and fused asynchronously.'
   }
 };
 
